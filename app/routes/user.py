@@ -1,43 +1,35 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from app.database import get_db, save
+from app.database import delete, get_all, get_by_id, get_db, save
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
 
 router = APIRouter()
 
 @router.post("/users/", response_model=UserResponse)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
+    user_data = User(**user.model_dump())
 
-    new_user = User(username=user.username, email=user.email, password=user.password)
-    save(db, new_user)
-    return {"message": "User created successfully"}
+    saved_user = await save(db, user_data)
+
+    return saved_user
+
 
 @router.get("/users/", response_model=List[UserResponse])
-def get_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
+async def get_users(db: AsyncSession = Depends(get_db)):
+    users = await get_all(db, User)
     return users
 
 @router.get("/users/{user_id}", response_model=UserResponse)
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    user = await get_by_id(db, User, user_id)
     return user
 
-@router.delete("/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    db.delete(user)
-    db.commit()
-    return {"message": f"User with ID {user_id} deleted successfully"}
-
+@router.delete("/users/{user_id}", status_code=204)
+async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    await delete(db, User, user_id)

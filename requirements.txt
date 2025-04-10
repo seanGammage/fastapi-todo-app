@@ -2,6 +2,6 @@ fastapi[all]
 uvicorn
 sqlalchemy
 python-dotenv
-psycopg2
+asyncpg
 databases[postgresql]
 alembic
