@@ -1,10 +1,23 @@
-version: "3.9"
+version: '3.7'
+
 services:
   app:
     build: .
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - postgres_data:/var/lib/postgresql/data  # Mount the volume for persistent data storage
+    depends_on:
+      - db  # Make sure the db service is started before the app
+
+  db:
+    image: postgres:13
     environment:
-      - PYTHONUNBUFFERED=1
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: todo_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Use the volume for persistent data storage
+
+volumes:
+  postgres_data:  # Define the named volume at the top level
