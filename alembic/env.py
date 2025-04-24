@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -26,6 +27,19 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+# Check if we're running in Kubernetes
+is_k8s = os.getenv("K8S_ENV", "false") == "true"
+
+# Load appropriate database URL from the .env based on environment
+if is_k8s:
+    database_url = os.getenv("K8S_DATABASE_URL")
+else:
+    database_url = os.getenv("LOCAL_DATABASE_URL")
+
+if not database_url:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
+config.set_main_option("sqlalchemy.url", database_url)
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

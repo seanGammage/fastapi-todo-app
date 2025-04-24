@@ -11,24 +11,15 @@ from sqlalchemy.orm import Session, sessionmaker
 from .models.base import Base
 from .models.user import User
 
-# SQLALCHEMY_DATABASE_URL = os.getenv(
-#     "DATABASE_URL", "postgresql+asyncpg://user:password@db/todo_db"
-# )
-
 # Check if we're running in Kubernetes
 is_k8s = os.getenv("K8S_ENV", "false") == "true"
 
-# Use different DATABASE_URL depending on environment
+# Load appropriate database URL from the .env based on environment
 if is_k8s:
-    # Kubernetes DB URL
-    SQLALCHEMY_DATABASE_URL = os.getenv(
-        "DATABASE_URL", "postgresql+asyncpg://user:password@postgres-service:5432/todo_db"
-    )
+    SQLALCHEMY_DATABASE_URL = os.getenv("K8S_DATABASE_URL")
 else:
-    # Local development DB URL
-    SQLALCHEMY_DATABASE_URL = os.getenv(
-        "DATABASE_URL", "postgresql+asyncpg://user:password@db/todo_db"
-    )
+    SQLALCHEMY_DATABASE_URL = os.getenv("LOCAL_DATABASE_URL")
+
 
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True, future=True)
 
