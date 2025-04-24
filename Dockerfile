@@ -1,21 +1,13 @@
-FROM python:3.10
-
-# Install dependencies needed for psycopg2
-RUN apt-get update && \
-    apt-get install -y libpq-dev build-essential && \
-    rm -rf /var/lib/apt/lists/*
+FROM python:3.10-slim
 
 WORKDIR /app
 
-# ENV PYTHONPATH="/app/app"
-
-COPY requirements.txt /app/
-
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY . /app/
+# Install PostgreSQL client tools for pg_isready
+RUN apt-get update && apt-get install -y postgresql-client
 
-EXPOSE 8000
+COPY . .
 
-ENTRYPOINT ["uvicorn", "app.main:app"]
-CMD ["--host", "0.0.0.0", "--port", "8000"]
+CMD ["bash", "/app/scripts/start.sh"]
